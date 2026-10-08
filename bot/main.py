@@ -1,4 +1,8 @@
-from telegram import Update
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup
+)
 from decimal import Decimal, InvalidOperation
 import asyncio
 from services.blockchain import NFTService
@@ -7,7 +11,8 @@ from telegram.ext import (
     CommandHandler,
     ContextTypes,
     MessageHandler,
-    filters
+    filters,
+    CallbackQueryHandler
 )
 from dotenv import load_dotenv
 import os
@@ -89,6 +94,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "📄 /config - လက်ရှိ NFT Configuration ကြည့်ရန်\n"
         "📄 /set_contract <address> - NFT Contract သတ်မှတ်ရန်\n"
         "📤 ABI JSON File - ဒီ Chat ထဲ Upload လုပ်ရန်\n"
+        "/detect_mint - To find mint function\n"
         "🔧 /set_mint_function <name> - Mint Function သတ်မှတ်ရန်\n"
         "💰 /set_price <price> <mode> - Mint Price သတ်မှတ်ရန်\n"
         "📦 /set_quantity <number> - Mint Quantity သတ်မှတ်ရန်\n\n"
@@ -1031,6 +1037,7 @@ async def handle_abi_text(
             "❌ ABI Update Failed!\n\n"
             f"Error: {str(e)}"
         )
+
 @admin_only
 async def set_mint_function(
     update: Update,
@@ -1211,9 +1218,116 @@ async def set_mint_price(
             "❌ Failed to save Mint Price!\n\n"
             f"Error: {str(e)}"
         )
+@admin_only
+async def handle_detect_mint(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    if not update.message:
+        return
 
+    try:
+        service = NFTService()
+        candidates = await asyncio.to_thread(
+            service.detect_mint_functions
+        )
 
+        if not candidates:
+            await update.message.reply_text(
+                "❌ Mint Function မတွေ့ပါဘူး။\n\n"
+                "ABI ထဲမှာ mint / claim လို function "
+                "candidate မရှိပါ။"
+            )
+            return
 
+        message = "🔎 NFT Mint Function Detection\n\n"
+
+        for index, candidate in enumerate(candidates, start=1):
+
+            name = candidate["name"]
+            score = candidate["score"]
+            state = candidate["stateMutability"]
+
+            if score >= 8:
+                confidence = "🟢 High"
+            elif score >= 5:
+                confidence = "🟡 Medium"
+            else:
+                confidence = "🟠 Low"
+
+            message += (
+                f"{index}. {name}\n"
+                f"   ⭐ Score: {score}\n"
+                f"   🎯 Confidence: {confidence}\n"
+                f"   💰 State: {state}\n"
+                f"   📌 "
+                + ", ".join(candidate["reasons"])
+                + "\n\n"
+            )
+
+        recommended_function = candidates[0]["name"]
+
+        message += (
+            "👉 Recommended:\n"
+            f"{recommended_function}"
+        )
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "✅ Use " + recommended_function,
+                    callback_data=f"use_mint:{recommended_function}"
+                )
+            ]
+        ]
+
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await update.message.reply_text(
+            message,
+            reply_markup=reply_markup
+        )
+
+    except Exception as e:
+
+        await update.message.reply_text(
+            "❌ Mint Function Detection Failed!\n\n"
+            f"Error: {str(e)}"
+        )
+
+@admin_only
+async def handle_use_mint(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    query = update.callback_query
+
+    if not query:
+        return
+
+    await query.answer()
+
+    data = query.data
+
+    if not data:
+        return
+
+    if not data.startswith("use_mint:"):
+        return
+
+    function_name = data.split(":", 1)[1]
+
+    config = nft_config.load_config()
+
+    config["mint_function"] = function_name
+
+    nft_config.save_config(config)
+
+    await query.edit_message_text(
+        "✅ Mint Function Selected!\n\n"
+        f"🔧 Function: {function_name}\n\n"
+        "The mint function has been saved successfully."
+    )
 @admin_only
 async def preview_mint_command(
     update: Update,
@@ -1559,6 +1673,12 @@ def main():
     app.add_handler(CommandHandler("set_price",set_price))
     app.add_handler(CommandHandler("set_quantity",set_quantity))
     app.add_handler(CommandHandler("ready",ready_command))
+    app.add_handler(
+    CommandHandler(
+        "detect_mint",
+        handle_detect_mint
+    )
+)
     
     
     app.add_handler(
@@ -1573,6 +1693,12 @@ def main():
         handle_abi_text
     )
 )
+    app.add_handler(
+    CallbackQueryHandler(
+        handle_use_mint
+    )
+)
+    
     
     print("🤖 NFT Mint Bot is running...")
 

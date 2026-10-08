@@ -1198,6 +1198,104 @@ class NFTService:
                 return item
 
         return None
+
+    def detect_mint_functions(self):
+        config = nft_config.load_config()
+
+        abi_file = "config/nft_abi.json"
+
+        with open(abi_file, "r", encoding="utf-8") as f:
+            abi = json.load(f)
+
+        if not abi:
+            raise ValueError("NFT ABI is not configured")
+
+        candidates = []
+
+        mint_keywords = [
+            "mint",
+            "publicmint",
+            "freemint",
+            "premint",
+            "claim",
+            "publicsale",
+            "presale"
+        ]
+
+        quantity_keywords = [
+            "quantity",
+            "amount",
+            "count",
+            "qty"
+        ]
+
+        address_keywords = [
+            "to",
+            "recipient",
+            "minter",
+            "buyer"
+        ]
+
+        for item in abi:
+
+            if item.get("type") != "function":
+                continue
+
+            name = item.get("name", "")
+            name_lower = name.lower()
+
+            inputs = item.get("inputs", [])
+            state_mutability = item.get("stateMutability", "")
+
+            score = 0
+            reasons = []
+
+            if name_lower in mint_keywords:
+                score += 5
+                reasons.append("mint-like function name")
+
+            elif "mint" in name_lower:
+                score += 4
+                reasons.append("contains 'mint'")
+
+            elif "claim" in name_lower:
+                score += 3
+                reasons.append("claim-like function name")
+
+            if state_mutability == "payable":
+                score += 3
+                reasons.append("payable")
+
+            for input_item in inputs:
+
+                input_name = input_item.get("name", "").lower()
+                input_type = input_item.get("type", "")
+
+                if input_name in quantity_keywords:
+                    if input_type.startswith("uint"):
+                        score += 3
+                        reasons.append("quantity parameter")
+
+                if input_name in address_keywords:
+                    if input_type == "address":
+                        score += 1
+                        reasons.append("address parameter")
+
+            if score >= 3:
+                candidates.append({
+                    "name": name,
+                    "inputs": inputs,
+                    "stateMutability": state_mutability,
+                    "score": score,
+                    "reasons": reasons
+                })
+
+        candidates.sort(
+            key=lambda x: x["score"],
+            reverse=True
+        )
+
+        return candidates
     def load_contract(self):
         config = nft_config.load_config()
 
