@@ -77,32 +77,68 @@ async def stop(
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
-        "🤖 NFT Mint Bot မှ ကြိုဆိုပါတယ်!\n\n"
+        "🤖 NFT Mint Bot မှ ကြိုဆိုပါတယ်!\n"
+        "━━━━━━━━━━━━━━━━━━\n\n"
 
-        "🚀 Mint\n"
-        "🪙 /auto_mint <quantity> - NFT Mint စတင်ရန်\n"
-        "🛑 /stop - Auto Mint ရပ်ရန်\n\n"
+        "🚀 MINT\n"
+        "NFT Mint စတင်ရန် အသုံးပြုပါ\n\n"
 
-        "📊 Bot Status\n"
-        "📊 /status - NFT Bot Status စစ်ရန်\n"
-        "🏥 /health - RPC / Wallet / Gas စစ်ရန်\n"
-        "💰 /balance - Wallet Balance စစ်ရန်\n"
-        "🔎 /tx - Transaction Status စစ်ရန်\n"
-        "🆔 /myid - Telegram ID ကြည့်ရန်\n\n"
+        "🪙 /auto_mint <quantity>\n"
+        "   → NFT အရေအတွက် သတ်မှတ်ပြီး Auto Mint စတင်ရန်\n\n"
 
-        "⚙️ NFT Configuration\n"
-        "📄 /config - လက်ရှိ NFT Configuration ကြည့်ရန်\n"
-        "📄 /set_contract <address> - NFT Contract သတ်မှတ်ရန်\n"
-        "📤 ABI JSON File - ဒီ Chat ထဲ Upload လုပ်ရန်\n"
-        "/detect_mint - To find mint function\n"
-        "🔧 /set_mint_function <name> - Mint Function သတ်မှတ်ရန်\n"
-        "💰 /set_price <price> <mode> - Mint Price သတ်မှတ်ရန်\n"
-        "📦 /set_quantity <number> - Mint Quantity သတ်မှတ်ရန်\n\n"
+        "🛑 /stop\n"
+        "   → Auto Mint ကို ရပ်ရန်\n\n\n"
 
-        "🔍 Mint Preparation\n"
-        "📋 /preview_mint <quantity> - Mint မလုပ်ခင် စစ်ဆေးရန်\n"
-        "🚀 /ready - Mint လုပ်ရန် အဆင်သင့်ဖြစ်/မဖြစ် စစ်ရန်\n"
-        
+
+        "⚙️ NFT SETUP\n"
+        "Mint မလုပ်ခင် NFT Project အချက်အလက်များ သတ်မှတ်ရန်\n\n"
+
+        "📄 /set_contract <address>\n"
+        "   → NFT Smart Contract Address သတ်မှတ်ရန်\n\n"
+
+        "📤 ABI JSON\n"
+        "   → NFT ABI JSON File ကို ဒီ Chat ထဲ Upload လုပ်ရန်\n\n"
+
+        "🔧 /detect_mint\n"
+        "   → ABI ထဲက Mint လုပ်နိုင်မယ့် Function များကို ရှာရန်\n\n"
+
+        "🔧 /set_mint_function <name>\n"
+        "   → အသုံးပြုမည့် Mint Function ကို သတ်မှတ်ရန်\n\n"
+
+        "💰 /set_price <price> <mode>\n"
+        "   → NFT Mint Price သတ်မှတ်ရန်\n\n"
+
+        "📦 /set_quantity <number>\n"
+        "   → Mint လုပ်မည့် NFT အရေအတွက် သတ်မှတ်ရန်\n\n\n"
+
+
+        "🔍 CHECK BEFORE MINT\n"
+        "Mint မလုပ်ခင် Configuration ကို စစ်ဆေးရန်\n\n"
+
+        "📋 /preview_mint <quantity>\n"
+        "   → Mint မလုပ်ခင် Transaction အချက်အလက်ကို ကြိုတင်ကြည့်ရန်\n\n"
+
+        "🚀 /ready\n"
+        "   → Mint လုပ်ရန် အားလုံးအဆင်သင့်ဖြစ်/မဖြစ် စစ်ရန်\n\n\n"
+
+
+        "📊 BOT & WALLET\n"
+        "Bot နဲ့ Wallet အခြေအနေများ စစ်ဆေးရန်\n\n"
+
+        "💰 /balance\n"
+        "   → Wallet ထဲက ETH Balance ကြည့်ရန်\n\n"
+
+        "📊 /status\n"
+        "   → Bot လက်ရှိအခြေအနေ ကြည့်ရန်\n\n"
+
+        "🏥 /health\n"
+        "   → RPC / Wallet / Gas စနစ်အခြေအနေ စစ်ရန်\n\n"
+
+        "🔎 /tx\n"
+        "   → Transaction အခြေအနေ စစ်ရန်\n\n"
+
+        "🆔 /myid\n"
+        "   → ကိုယ့် Telegram ID ကြည့်ရန်"
     )
 def is_admin(update: Update) -> bool:
     return update.effective_user.id in ADMIN_IDS
