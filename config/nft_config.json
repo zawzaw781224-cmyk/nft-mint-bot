@@ -1,0 +1,7 @@
+{
+    "contract_address": null,
+    "mint_function": "mint",
+    "mint_price_eth": 0.001,
+    "price_mode": "per_transaction",
+    "mint_quantity": 3
+}
