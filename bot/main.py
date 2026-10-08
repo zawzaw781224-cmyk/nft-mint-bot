@@ -929,6 +929,108 @@ async def handle_abi_upload(
 
         if os.path.exists(temp_path):
             os.remove(temp_path)
+
+
+@admin_only
+async def handle_abi_text(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    if not update.message:
+        return
+
+    text = update.message.text
+
+    if not text:
+        return
+
+    text = text.strip()
+
+    # JSON ABI must start with [
+    # and end with ]
+    if not (
+        text.startswith("[")
+        and text.endswith("]")
+    ):
+        return
+
+    try:
+        abi = json.loads(text)
+
+        if not isinstance(abi, list):
+            raise ValueError(
+                "ABI must be a JSON array"
+            )
+
+        if not abi:
+            raise ValueError(
+                "ABI is empty"
+            )
+
+        valid_entries = []
+
+        for item in abi:
+            if not isinstance(item, dict):
+                continue
+
+            item_type = item.get("type")
+
+            if item_type in {
+                "function",
+                "event",
+                "constructor",
+                "fallback",
+                "receive"
+            }:
+                valid_entries.append(item)
+
+        if not valid_entries:
+            raise ValueError(
+                "ABI does not contain valid entries"
+            )
+
+        function_count = sum(
+            1
+            for item in valid_entries
+            if item.get("type") == "function"
+        )
+
+        event_count = sum(
+            1
+            for item in valid_entries
+            if item.get("type") == "event"
+        )
+
+        with open(
+            "config/nft_abi.json",
+            "w",
+            encoding="utf-8"
+        ) as f:
+            json.dump(
+                valid_entries,
+                f,
+                indent=4
+            )
+
+        await update.message.reply_text(
+            "✅ NFT ABI Updated Successfully!\n\n"
+            f"🔧 Functions: {function_count}\n"
+            f"📡 Events: {event_count}\n"
+            f"📚 Total Entries: "
+            f"{len(valid_entries)}"
+        )
+
+    except json.JSONDecodeError:
+        await update.message.reply_text(
+            "❌ Invalid JSON!\n\n"
+            "ABI JSON format မှားနေပါတယ်။"
+        )
+
+    except Exception as e:
+        await update.message.reply_text(
+            "❌ ABI Update Failed!\n\n"
+            f"Error: {str(e)}"
+        )
 @admin_only
 async def set_mint_function(
     update: Update,
@@ -1463,6 +1565,12 @@ def main():
     MessageHandler(
         filters.Document.ALL,
         handle_abi_upload
+    )
+)
+    app.add_handler(
+    MessageHandler(
+        filters.TEXT & ~filters.COMMAND,
+        handle_abi_text
     )
 )
     
